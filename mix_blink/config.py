@@ -13,6 +13,8 @@ class MixBlinkConfig(PretrainedConfig):
             mention_encoder_config: Optional[dict] = None,
             entity_encoder_config: Optional[dict] = None,
             hidden_size: int = 768,
+            mention_encoder_vocab_size: int = -1,
+            entity_encoder_vocab_size: int = -1,
             freeze_mention_encoder: bool = False,
             freeze_entity_encoder: bool = False,
             **kwargs: str
@@ -33,5 +35,8 @@ class MixBlinkConfig(PretrainedConfig):
         self.hidden_size = hidden_size
         self.freeze_mention_encoder = freeze_mention_encoder
         self.freeze_entity_encoder = freeze_entity_encoder
+
+        self.mention_encoder_vocab_size = mention_encoder_vocab_size
+        self.entity_encoder_vocab_size = entity_encoder_vocab_size
 
 CONFIG_MAPPING.update({"mixblink": MixBlinkConfig})
