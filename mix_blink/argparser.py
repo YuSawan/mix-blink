@@ -26,7 +26,6 @@ class DatasetArguments:
     start_mention_token: str
     end_mention_token: str
     entity_token: str
-    task_description: str
 
 
 @dataclass
