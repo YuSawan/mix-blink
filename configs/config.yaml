@@ -1,7 +1,7 @@
 # Model Configuration
 model:
-  mention_encoder: 'studio-ousia/luke-large-lite' # Hugging Face model
-  entity_encoder: 'studio-ousia/luke-large-lite' # Hugging Face model
+  mention_encoder: 'google-bert/bert-large-uncased' # Hugging Face model
+  entity_encoder: 'google-bert/bert-large-uncased' # Hugging Face model
   hidden_size: 1024 # 768 if you use base
   freeze_mention_encoder: false
   freeze_entity_encoder: false
