@@ -58,6 +58,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             freeze_entity_encoder=model_args.freeze_entity_encoder,
             freeze_mention_encoder=model_args.freeze_mention_encoder,
         )
+        model = MixBlink(config)
 
     cache_dir = model_args.cache_dir or get_temporary_cache_files_directory()
     dictionary = EntityDictionary(
@@ -74,7 +75,13 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
         data_args.test_file,
         cache_dir
     )
-    preprocessor = Preprocessor(mention_tokenizer, dictionary.entity_ids, remove_nil=False if data_args.add_nil else True)
+    preprocessor = Preprocessor(
+        mention_tokenizer,
+        dictionary.entity_ids,
+        start_mention_token=data_args.start_mention_token,
+        end_mention_token=data_args.end_mention_token,
+        remove_nil=False if data_args.add_nil else True
+    )
     splits = get_splits(raw_datasets, preprocessor, training_args)
 
     if training_args.do_train:
