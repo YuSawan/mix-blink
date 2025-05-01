@@ -20,6 +20,17 @@ class MixBlink(nn.Module):
         super().__init__()
         self.config = config
         self.model = BiEncoder(config, encoder_from_pretrained)
+
+        if config.mention_encoder_vocab_size == -1:
+            config.mention_encoder_vocab_size = self.entity_encoder.config.vocab_size
+        if config.mention_encoder_vocab_size != self.mention_encoder.config.vocab_size:
+            self.mention_encoder.resize_token_embeddings(config.mention_encoder_vocab_size)
+
+        if config.entity_encoder_vocab_size == -1:
+            config.entity_encoder_vocab_size = self.model.entity_encoder.config.vocab_size
+        if config.entity_encoder_vocab_size != self.model.entity_encoder.config.vocab_size:
+            self.entity_encoder.resize_token_embeddings(config.entity_encoder_vocab_size)
+
         if config.freeze_entity_encoder:
             self.entity_encoder.freeze_parameters()
         if config.freeze_mention_encoder:
