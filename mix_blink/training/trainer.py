@@ -1,12 +1,19 @@
+import os
+from logging import INFO, getLogger
 from typing import Any, Optional, Union
 
+import safetensors.torch
 import torch
 import torch.nn as nn
 from transformers import BatchEncoding, EvalPrediction, PreTrainedModel, Trainer
 from transformers.trainer_pt_utils import nested_detach
+from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 
 from ..model import MixBlink
 from ..modeling import EntityLinkingOutput
+
+logger = getLogger(__name__)
+logger.setLevel(INFO)
 
 
 class EntityLinkingTrainer(Trainer):
@@ -147,6 +154,24 @@ class EntityLinkingTrainer(Trainer):
         labels = inputs.get('labels')
 
         return (loss, detached_logits, labels)
+
+    def _load_best_model(self) -> None:
+        logger.info(f"Loading best model from {self.state.best_model_checkpoint} (score: {self.state.best_metric}).")
+        best_model_path = os.path.join(self.state.best_model_checkpoint, WEIGHTS_NAME)
+        best_safe_model_path = os.path.join(self.state.best_model_checkpoint, SAFE_WEIGHTS_NAME)
+
+        model = self.model
+        # We load the model state dict on the CPU to avoid an OOM error.
+        if self.args.save_safetensors and os.path.isfile(best_safe_model_path):
+            state_dict = safetensors.torch.load_file(best_safe_model_path, device="cpu")
+        else:
+            state_dict = torch.load(best_model_path, map_location="cpu", weights_only=True)
+
+        # If the model is on the GPU, it still works!
+        # workaround for FSDP bug https://github.com/pytorch/pytorch/issues/82963
+        # which takes *args instead of **kwargs
+        load_result = model.load_state_dict(state_dict, False)
+        self._issue_warnings_after_load(load_result)
 
 
 def _compute_metrics(p: EvalPrediction, label_names: list[str]) -> dict[str, Any]:
