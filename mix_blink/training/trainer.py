@@ -189,7 +189,6 @@ def _compute_loss(model: MixBlink, inputs: BatchEncoding, measure: str, temperat
         hard_negatives_token_type_ids = hard_negatives_token_type_ids,
     )
 
-    outputs = model(**inputs)
     queries = outputs.query_hidden_state
     candidates = outputs.candidates_hidden_state
     hard_negatives = outputs.hard_negatives_hidden_state
