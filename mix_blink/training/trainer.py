@@ -165,15 +165,29 @@ def _compute_metrics(p: EvalPrediction, label_names: list[str]) -> dict[str, Any
 
 
 def _compute_loss(model: MixBlink, inputs: BatchEncoding, measure: str, temperature: float) -> EntityLinkingOutput:
-    _ = inputs.pop("num_items_in_batch")
-    labels = inputs.pop('labels')
-    if not isinstance(labels, torch.Tensor):
-        if isinstance(labels, list):
-            labels = torch.tensor(labels)
-        elif isinstance(labels, tuple):
-            labels = torch.tensor(labels[0])
-        else:
-            raise ValueError(f"Unsupported type for labels: {type(labels)}")
+    input_ids = inputs.get('input_ids')
+    attention_mask = inputs.get('attention_mask')
+    token_type_ids = inputs.get('token_type_ids')
+
+    candidates_input_ids = inputs.get('candidates_input_ids')
+    candidates_attention_mask = inputs.get('candidates_attention_mask')
+    candidates_token_type_ids = inputs.get('candidates_token_type_ids')
+
+    hard_negatives_input_ids = inputs.get('hard_negatives_input_ids')
+    hard_negatives_attention_mask = inputs.get('hard_negatives_attention_mask')
+    hard_negatives_token_type_ids = inputs.get('hard_negatives_token_type_ids')
+
+    outputs = model(
+        input_ids = input_ids,
+        attention_mask = attention_mask,
+        token_type_ids = token_type_ids,
+        candidates_input_ids = candidates_input_ids,
+        candidates_attention_mask = candidates_attention_mask,
+        candidates_token_type_ids = candidates_token_type_ids,
+        hard_negatives_input_ids = hard_negatives_input_ids,
+        hard_negatives_attention_mask = hard_negatives_attention_mask,
+        hard_negatives_token_type_ids = hard_negatives_token_type_ids,
+    )
 
     outputs = model(**inputs)
     queries = outputs.query_hidden_state
@@ -181,6 +195,7 @@ def _compute_loss(model: MixBlink, inputs: BatchEncoding, measure: str, temperat
     hard_negatives = outputs.hard_negatives_hidden_state
     bs, hs = candidates.size(0), candidates.size(-1)
     candidates = candidates.unsqueeze(0).repeat(bs, 1, 1)
+    labels = inputs.get('labels')
 
     if hard_negatives is not None:
         hard_negatives = hard_negatives.reshape([bs, -1, hs])
