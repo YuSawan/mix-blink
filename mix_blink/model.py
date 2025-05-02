@@ -99,7 +99,8 @@ class MixBlink(nn.Module):
         save_directory.mkdir(parents=True, exist_ok=True)
 
         # save model weights/files
-        model_state_dict = self.prepare_state_dict(self.model.state_dict())
+        # model_state_dict = self.prepare_state_dict(self.model.state_dict())
+        model_state_dict = self.model.state_dict()
         # save model weights using safetensors
         if safe_serialization:
             save_file(model_state_dict, os.path.join(save_directory, "model.safetensors"))

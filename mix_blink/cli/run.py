@@ -130,7 +130,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             assert training_args.output_dir
             mention_tokenizer.save_pretrained(Path(training_args.output_dir, 'mention_tokenizer'))
             entity_tokenizer.save_pretrained(Path(training_args.output_dir, 'entity_tokenizer'))
-            trainer.save_model()
+            trainer.save_model(training_args.output_dir)
             trainer.save_state()
             trainer.save_metrics("train", result.metrics)
 
