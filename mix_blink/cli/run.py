@@ -44,6 +44,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
         mention_tokenizer = AutoTokenizer.from_pretrained(Path(model_args.prev_path, 'mention_tokenizer'))
         entity_tokenizer = AutoTokenizer.from_pretrained(Path(model_args.prev_path, 'entity_tokenizer'))
         model = MixBlink.from_pretrained(model_args.prev_path)
+        config = model.config
     else:
         mention_tokenizer = AutoTokenizer.from_pretrained(model_args.mention_encoder, model_max_length=model_args.mention_context_length, token=TOKEN)
         entity_tokenizer = AutoTokenizer.from_pretrained(model_args.entity_encoder, model_max_length=model_args.entity_context_length, token=TOKEN)
@@ -130,7 +131,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             assert training_args.output_dir
             mention_tokenizer.save_pretrained(Path(training_args.output_dir, 'mention_tokenizer'))
             entity_tokenizer.save_pretrained(Path(training_args.output_dir, 'entity_tokenizer'))
-            trainer.save_model()
+            trainer.save_model(training_args.output_dir)
             trainer.save_state()
             trainer.save_metrics("train", result.metrics)
 
