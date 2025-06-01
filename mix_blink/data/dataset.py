@@ -88,7 +88,7 @@ class Preprocessor:
                 )
                 encodings["text"] = example["text"]
                 encodings["entity_span"] = (ent["start"], ent["end"])
-                encodings["id"] = example['paragraph-id']
+                encodings["id"] = example['id']
                 try:
                     encodings["labels"] = [self.label2id[label] for label in ent["label"]]
                 except KeyError:
