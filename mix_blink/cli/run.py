@@ -65,6 +65,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
     dictionary = EntityDictionary(
         tokenizer=entity_tokenizer,
         dictionary_path=data_args.dictionary_file,
+        entity_token=data_args.entity_token,
         cache_dir=cache_dir,
         training_arguments=training_args,
         nil={"name": data_args.nil_label, "description": data_args.nil_description} if data_args.add_nil else None
