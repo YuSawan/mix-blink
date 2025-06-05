@@ -89,14 +89,17 @@ class Preprocessor:
                 encodings["text"] = example["text"]
                 encodings["entity_span"] = (ent["start"], ent["end"])
                 encodings["id"] = example['id']
-                try:
-                    encodings["labels"] = [self.label2id[label] for label in ent["label"]]
-                except KeyError:
-                    if self.remove_nil:
-                        continue
+                encodings["label"] = []
+                for label in ent["label"]:
+                    if label in self.label2id:
+                        encodings["label"].append(self.label2id[label])
                     else:
-                        raise KeyError
-                yield encodings
+                        if self.remove_nil:
+                            continue
+                        else:
+                            raise KeyError(f"Label {label} not found in label2id mapping.")
+                if encodings["label"]:
+                    yield encodings
 
 
 def get_splits(
