@@ -89,16 +89,16 @@ class Preprocessor:
                 encodings["text"] = example["text"]
                 encodings["entity_span"] = (ent["start"], ent["end"])
                 encodings["id"] = example['id']
-                encodings["label"] = []
+                encodings["labels"] = []
                 for label in ent["label"]:
                     if label in self.label2id:
-                        encodings["label"].append(self.label2id[label])
+                        encodings["labels"].append(self.label2id[label])
                     else:
                         if self.remove_nil:
                             continue
                         else:
                             raise KeyError(f"Label {label} not found in label2id mapping.")
-                if encodings["label"]:
+                if encodings["labels"]:
                     yield encodings
 
 
