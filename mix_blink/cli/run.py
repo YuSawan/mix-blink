@@ -151,12 +151,25 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
         results = evaluate(model=model, dataset=splits['test'], retriever=retriever)
         if training_args.do_train:
             submit_wandb_eval(results)
+
         logger.info(f"R@1: {round(results['tp_1']/results['true'], 5)} ({results['tp_1']}/{results['true']})")
         logger.info(f"R@5: {round(results['tp_5']/results['true'], 5)} ({results['tp_5']}/{results['true']})")
         logger.info(f"R@10: {round(results['tp_10']/results['true'], 5)} ({results['tp_10']}/{results['true']})")
         logger.info(f"R@20: {round(results['tp_20']/results['true'], 5)} ({results['tp_20']}/{results['true']})")
         logger.info(f"R@50: {round(results['tp_50']/results['true'], 5)} ({results['tp_50']}/{results['true']})")
         logger.info(f"R@100: {round(results['tp_100']/results['true'], 5)} ({results['tp_100']}/{results['true']})")
+
+        if training_args.output_dir:
+            with open(Path(training_args.output_dir, "eval_results.json"), 'w') as f:
+                eval_results = {
+                    "R@1": round(results['tp_1']/results['true'], 5),
+                    "R@5": round(results['tp_5']/results['true'], 5),
+                    "R@10": round(results['tp_10']/results['true'], 5),
+                    "R@20": round(results['tp_20']/results['true'], 5),
+                    "R@50": round(results['tp_50']/results['true'], 5),
+                    "R@100": round(results['tp_100']/results['true'], 5),
+                }
+                json.dump(eval_results, f, ensure_ascii=False, indent=4)
 
     if training_args.do_predict:
         assert training_args.output_dir
