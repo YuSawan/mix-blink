@@ -28,12 +28,14 @@ class EntityDictionary:
             self,
             tokenizer: PreTrainedTokenizerBase,
             dictionary_path: str|os.PathLike,
+            entity_token: str = "[ENT]",
             cache_dir: Optional[str] = None,
             training_arguments: Optional[TrainingArguments] = None,
             nil: Optional[dict[str, str]] = None,
         ) -> None:
         self.tokenizer = tokenizer
         self.model_name = tokenizer.name_or_path
+        self.entity_token = entity_token
         self.entity_dict = self.read_dictionary(dictionary_path, cache_dir, training_arguments, nil)
         self.entity_ids = list(self.entity_dict['id'])
         if not nil:
@@ -95,7 +97,7 @@ class EntityDictionary:
         return Entity(id=value["id"], name=value["name"], description=value["description"], label_id=idx, encoding=value["encodings"])
 
     def get_encoding(self, name: str, description: Optional[str] = None) -> tuple[str, BatchEncoding]:
-        text = name + self.tokenizer.sep_token
+        text = name + self.entity_token
         text += description if description else f"{name} is an entity in this dictionary."
         encoding  = self.tokenizer(text, padding=True, truncation=True)
         return text, encoding

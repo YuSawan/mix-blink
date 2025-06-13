@@ -14,7 +14,7 @@ for measure in 'cos' 'ip' 'cos'; do
 base_output_dir=${output_dir}/${seed}/${measure}
 mkdir -p ${base_output_dir}
 
-uv run python luke_el/cli/run.py \
+uv run python mix_blink/cli/run.py \
     --do_train \
     --do_eval \
     --do_predict \
@@ -24,7 +24,7 @@ uv run python luke_el/cli/run.py \
     --output_dir ${base_output_dir}/first \
     --run_name ${base_output_dir}/first
 
-uv run python luke_el/cli/run.py \
+uv run python mix_blink/cli/run.py \
     --do_train \
     --do_eval \
     --do_predict \

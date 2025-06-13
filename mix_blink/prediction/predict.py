@@ -46,7 +46,7 @@ def predict(model: MixBlink, dataset: Dataset, retriever: DenseRetriever, reset_
                 "name": entry.name,
                 "id": entry.id,
                 'similarity': round(float(d), 4),
-                "description": entry.description
+                "description": entry.description[:300]
             })
         for idx in labels:
             entry = dictionary[idx]
