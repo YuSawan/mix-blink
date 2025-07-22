@@ -22,7 +22,7 @@ dataset:
   dictionary_file: 'dictionary.jsonl'
   add_nil: true
   nil_label: '[NIL]'
-  nil_description: '[NIL]は、どの企業IDにも当てはまらない企業である。'
+  nil_description: '[NIL] is an entity that does not exist in the dataset.'
   start_mention_token: '<mention>'
   end_mention_token: '</mention>'
   entity_token: '<entity>'
