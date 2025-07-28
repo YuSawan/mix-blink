@@ -28,7 +28,7 @@ def test_EntityDictionary(model_name: str) -> None:
     label_id = dictionary("000012").label_id
     assert dictionary[label_id].name == "Apple"
 
-    nil_description = "[NIL]はどのIDにもあてはまらないメンションです。"
+    nil_description = "[NIL] is an entity that does not exist in the dataset."
     dictionary = EntityDictionary(tokenizer, dictionary_path, nil={"description": nil_description})
     assert len(dictionary) == 6
     assert dictionary[5].id == "-1"
@@ -36,7 +36,7 @@ def test_EntityDictionary(model_name: str) -> None:
     assert dictionary("-1").name == "[NIL]"
     label_id = dictionary("-1").label_id
     assert dictionary[label_id].name == "[NIL]"
-    assert dictionary("-1").description == "[NIL]"+tokenizer.sep_token+"[NIL]はどのIDにもあてはまらないメンションです。"
+    assert dictionary("-1").description == "[NIL]"+dictionary.entity_token+"[NIL] is an entity that does not exist in the dataset."
 
     for entity in dictionary:
         assert isinstance(entity, Entity)
@@ -48,4 +48,4 @@ def test_EntityDictionary(model_name: str) -> None:
 
     nil_description = ""
     dictionary = EntityDictionary(tokenizer, dictionary_path, nil={"description": nil_description})
-    assert dictionary("-1").description == "[NIL]"+tokenizer.sep_token+"[NIL] is an entity in this dictionary."
+    assert dictionary("-1").description == "[NIL]"+dictionary.entity_token+"[NIL] is an entity in this dictionary."
