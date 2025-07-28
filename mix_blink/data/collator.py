@@ -22,6 +22,7 @@ class Collator(DataCollatorWithPadding):
                 _ = f.pop('text')
                 _ = f.pop('entity_span')
                 _ = f.pop("id")
+                _ = f.pop("candidates", None)
                 labels.append(f.pop("labels"))
             batch = pad_without_fast_tokenizer_warning(
                 self.tokenizer,
@@ -49,7 +50,6 @@ class Collator(DataCollatorWithPadding):
 class CollatorForEntityLinking:
     tokenizer: PreTrainedTokenizerBase
     dictionary: EntityDictionary
-    negative_sample: str = "inbatch"
 
     padding: Union[bool, str, PaddingStrategy] = True
     max_length: Optional[int] = None
@@ -65,9 +65,9 @@ class CollatorForEntityLinking:
             _ = f.pop("id")
             labels = f.pop("labels")
             inbatch_encodings.append(self.dictionary[labels[0]].encoding)
-            if self.negative_sample != "inbatch":
-                negatives = f.pop("negatives")
-                negative_encodings.extend([self.dictionary(n).encoding for n in negatives])
+            candidates = f.pop("candidates")
+            if candidates != []:
+                negative_encodings.extend([self.dictionary[n].encoding for n in candidates])
 
         batch = pad_without_fast_tokenizer_warning(
             self.tokenizer,
@@ -77,7 +77,6 @@ class CollatorForEntityLinking:
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors=self.return_tensors,
         )
-
         inbatch_candidates = pad_without_fast_tokenizer_warning(
             self.tokenizer,
             inbatch_encodings,
@@ -87,8 +86,7 @@ class CollatorForEntityLinking:
             return_tensors=self.return_tensors,
         )
         batch.update({f'candidates_{k}': v for k, v in inbatch_candidates.items()})
-
-        if self.negative_sample != 'inbatch':
+        if negative_encodings != []:
             negative_batch = pad_without_fast_tokenizer_warning(
                 self.tokenizer,
                 negative_encodings,
