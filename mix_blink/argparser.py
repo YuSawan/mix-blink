@@ -17,15 +17,16 @@ def load_config_as_namespace(config_file: str | os.PathLike) -> Namespace:
 class DatasetArguments:
     """Dataset arguments."""
     dictionary_file: str
-    train_file : str
-    validation_file : str
-    test_file: str
-    add_nil: bool
-    nil_label: str
-    nil_description: str
-    start_mention_token: str
-    end_mention_token: str
-    entity_token: str
+    train_file : Optional[str] = None
+    validation_file : Optional[str] = None
+    test_file: Optional[str] = None
+    add_nil: bool = False
+    nil_label: str = "[NIL]"
+    nil_description: str = "[NIL] is an entity that does not exist in the dataset."
+    start_mention_token: str = "[START_ENT]"
+    end_mention_token: str = "[END_ENT]"
+    entity_token: str = "[ENT]"
+    language: str = "en"
 
 
 @dataclass
@@ -54,10 +55,10 @@ def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
         "--config_file", metavar="FILE", required=True
     )
     parser.add_argument(
-        "--measure", type=str, default='cos'
+        "--measure", type=str, default=None
     )
     parser.add_argument(
-        "--negative", type=str, default='inbatch'
+        "--negative", type=str, default=None
     )
     parser.add_argument(
         '--prev_path', metavar="DIR", default=None
