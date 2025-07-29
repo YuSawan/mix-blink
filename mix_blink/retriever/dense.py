@@ -107,11 +107,9 @@ class DenseRetriever:
         return distances, indices_keys
 
     @torch.no_grad()
-    def get_hard_negatives(self, model: MixBlink, dataset: Dataset, reset_index: bool = True) -> list[list[str]]:
+    def get_hard_negatives(self, model: MixBlink, dataset: Dataset) -> list[list[str]]:
         model.to(self.device)
         model.eval()
-        if reset_index:
-            self.build_index(model.entity_encoder)
 
         dataloader = self.get_dataloader(dataset, self.mention_tokenizer)
         pbar = tqdm(total=(len(dataloader)), desc='Hard Negative Search')
@@ -135,7 +133,6 @@ class DenseRetriever:
         self.serialize(index_path, ensure_ascii)
 
     def serialize(self, index_path: str, ensure_ascii: bool = False) -> None:
-        logger.info("Serializing index to %s", index_path)
         if os.path.isdir(index_path):
             index_file = os.path.join(index_path, "index.dpr")
             meta_file = os.path.join(index_path, "meta.json")
@@ -144,6 +141,7 @@ class DenseRetriever:
             meta_file = index_path + ".meta.json"
         faiss.write_index(self.index, index_file)
         json.dump(self.meta_ids_to_keys, open(meta_file, 'w'), ensure_ascii=ensure_ascii)
+        logger.info("Serializing index to %s", index_file)
 
     def deserialize_from(self, index_path: str) -> None:
         if os.path.isdir(index_path):
@@ -153,9 +151,9 @@ class DenseRetriever:
             index_file = index_path + ".index.dpr"
             meta_file = index_path + ".meta.json"
 
-        logger.info("Loading index from %s", index_file)
         self.index = faiss.read_index(index_file)
         self.meta_ids_to_keys = {int(k): v for k, v in json.load(open(meta_file)).items()}
+        logger.info("Loading index from %s", index_file)
         logger.info(
             "Loaded index of type %s and size %d", type(self.index), self.index.ntotal
         )
