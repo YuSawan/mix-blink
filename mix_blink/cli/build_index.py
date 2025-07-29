@@ -73,7 +73,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             device=torch.device(training_args.device) if torch.cuda.is_available() else torch.device('cpu'),
             training_args=training_args
         )
-        dense_retriever.dump(model.entity_encoder, os.path.join(training_args.output_dir, 'retriever'))
+        dense_retriever.dump(model.entity_encoder, training_args.output_dir)
     elif model_args.negative == 'bm25':
         bm25_retriever = BM25Retriever(
             dictionary,
@@ -81,7 +81,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             lang='en'
         )
         bm25_retriever.build_index()
-        bm25_retriever.dump(os.path.join(training_args.output_dir, 'retriever'))
+        bm25_retriever.dump(training_args.output_dir)
     else:
         raise ValueError(f"Unknown negative sampling method: {model_args.negative}")
 
