@@ -124,13 +124,14 @@ class BM25Retriever:
         self.serialize(index_path)
 
     def serialize(self, index_path: str) -> None:
-        logger.info("Serializing index to %s", index_path)
         index_file = os.path.join(index_path, 'index.bm25') if os.path.isdir(index_path) else index_path + ".index.bm25"
+        logger.info("Serializing index to %s", index_file)
         self.index.save(index_file)
 
     def deserialize_from(self, index_path: str) -> None:
-        self.meta_ids_to_keys = {i: idx for i, idx in enumerate(self.dictionary.entity_ids)}
         index_file = os.path.join(index_path, 'index.bm25') if os.path.isdir(index_path) else index_path + ".index.bm25"
+        logger.info("Deserializing index from %s", index_file)
+        self.meta_ids_to_keys = {i: idx for i, idx in enumerate(self.dictionary.entity_ids)}
         self.index = BM25HF.load(index_file, load_corpus=True)
 
     def index_exists(self, path: str) -> bool:
