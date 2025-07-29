@@ -123,23 +123,12 @@ class BM25Retriever:
     def dump(self, index_path: str) -> None:
         self.serialize(index_path)
 
-    def serialize(self, index_path: str) -> None:
-        index_file = os.path.join(index_path, 'index.bm25') if os.path.isdir(index_path) else index_path + ".index.bm25"
-        logger.info("Serializing index to %s", index_file)
-        self.index.save(index_file)
+    def serialize(self, output_dir: str) -> None:
+        index_dir = os.path.join(output_dir, 'retriever_bm25')
+        logger.info("Serializing index to %s", index_dir)
+        self.index.save(index_dir)
 
-    def deserialize_from(self, index_path: str) -> None:
-        index_file = os.path.join(index_path, 'index.bm25') if os.path.isdir(index_path) else index_path + ".index.bm25"
-        logger.info("Deserializing index from %s", index_file)
+    def deserialize_from(self, index_dir: str) -> None:
+        logger.info("Deserializing index from %s", index_dir)
         self.meta_ids_to_keys = {i: idx for i, idx in enumerate(self.dictionary.entity_ids)}
-        self.index = BM25HF.load(index_file, load_corpus=True)
-
-    def index_exists(self, path: str) -> bool:
-        if os.path.isdir(path):
-            index_file = os.path.join(path, "index.bm25")
-        else:
-            index_file = path + ".index.bm25"
-        return os.path.isfile(index_file)
-
-    def __len__(self) -> int:
-        raise NotImplementedError("BM25Retriever does not support __len__ method. Use len(dictionary) instead.")
+        self.index = BM25HF.load(index_dir, load_corpus=True)

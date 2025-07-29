@@ -49,6 +49,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
         training_arguments=training_args,
         nil={"name": data_args.nil_label, "description": data_args.nil_description} if data_args.add_nil else None
     )
+    assert training_args.output_dir is not None
     if model_args.negative == 'dense':
         config = MixBlinkConfig(
             model_args.mention_encoder,
@@ -72,7 +73,6 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             device=torch.device(training_args.device) if torch.cuda.is_available() else torch.device('cpu'),
             training_args=training_args
         )
-        assert training_args.output_dir is not None
         dense_retriever.dump(model.entity_encoder, os.path.join(training_args.output_dir, 'retriever'))
     elif model_args.negative == 'bm25':
         bm25_retriever = BM25Retriever(
@@ -80,7 +80,6 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
             top_k=model_args.top_k,
             lang='en'
         )
-        assert training_args.output_dir is not None
         bm25_retriever.build_index()
         bm25_retriever.dump(os.path.join(training_args.output_dir, 'retriever'))
     else:

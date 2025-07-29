@@ -132,40 +132,20 @@ class DenseRetriever:
         self.build_index(model)
         self.serialize(index_path, ensure_ascii)
 
-    def serialize(self, index_path: str, ensure_ascii: bool = False) -> None:
-        if os.path.isdir(index_path):
-            index_file = os.path.join(index_path, "index.dpr")
-            meta_file = os.path.join(index_path, "meta.json")
-        else:
-            index_file = index_path + ".index.dpr"
-            meta_file = index_path + ".meta.json"
+    def serialize(self, output_dir: str, ensure_ascii: bool = False) -> None:
+        index_dir = os.path.join(output_dir, 'retriever_dense')
+        index_file = os.path.join(index_dir, "index.dpr")
+        meta_file = os.path.join(index_dir, "meta.json")
         faiss.write_index(self.index, index_file)
         json.dump(self.meta_ids_to_keys, open(meta_file, 'w'), ensure_ascii=ensure_ascii)
         logger.info("Serializing index to %s", index_file)
 
-    def deserialize_from(self, index_path: str) -> None:
-        if os.path.isdir(index_path):
-            index_file = os.path.join(index_path, "index.dpr")
-            meta_file = os.path.join(index_path, "meta.json")
-        else:
-            index_file = index_path + ".index.dpr"
-            meta_file = index_path + ".meta.json"
-
+    def deserialize_from(self, index_dir: str) -> None:
+        index_file = os.path.join(index_dir, "index.dpr")
+        meta_file = os.path.join(index_dir, "meta.json")
         self.index = faiss.read_index(index_file)
         self.meta_ids_to_keys = {int(k): v for k, v in json.load(open(meta_file)).items()}
         logger.info("Loading index from %s", index_file)
         logger.info(
             "Loaded index of type %s and size %d", type(self.index), self.index.ntotal
         )
-
-    def index_exists(self, path: str) -> bool:
-        if os.path.isdir(path):
-            index_file = os.path.join(path, "index.dpr")
-            meta_file = os.path.join(path, "meta.json")
-        else:
-            index_file = path + ".index.dpr"
-            meta_file = path + ".meta.json"
-        return os.path.isfile(index_file) and os.path.isfile(meta_file)
-
-    def __len__(self) -> int:
-        return self.index.ntotal
