@@ -117,16 +117,17 @@ def _convert_conll_to_ours(input_file: str) -> tuple[list[dict], list[tuple[str,
 
     for i, (id, sentences) in enumerate(read_conll(input_file, delimiter='\t')):
         examples = []
-        for i, sentence in enumerate(sentences):
+        id = str(i) if not id else str(id)
+        for si, sentence in enumerate(sentences):
             text = sentence['text']
             entities = sentence['entities']
             titles.extend([(ent['label'][0], ent['title'][0]) for ent in sentence['entities']])
             examples.append({
-                "id": f"{id}-{i}",
+                "id": f"{id}-{si}",
                 "text": text,
                 "entities": entities,
             })
-        dataset.append({"id": id if id else i, "examples": examples})
+        dataset.append({"id": id, "examples": examples})
 
     return dataset, titles
 
@@ -177,7 +178,7 @@ def convert_description_to_dictionary(args: Namespace, titles: list[tuple[str, s
     descriptions = {}
     for line in open(description_file, 'r', encoding='utf-8'):
         item = json.loads(line.strip())
-        descriptions[item['wikipedia_id']] = {
+        descriptions[str(item['wikipedia_id'])] = {
             "name": item["wikipedia_title"],
             "description": item.get("description", "")
         }
@@ -186,13 +187,13 @@ def convert_description_to_dictionary(args: Namespace, titles: list[tuple[str, s
         for id, title in titles:
             if id in descriptions:
                 f.write(json.dumps({
-                    "id": id,
+                    "id": str(id),
                     "name": descriptions[id]["name"],
                     "description": descriptions[id]["description"]
                 }, ensure_ascii=False) + '\n')
             else:
                 f.write(json.dumps({
-                    "id": id,
+                    "id": str(id),
                     "name": title,
                     "description": ""
                 }, ensure_ascii=False) + '\n')
@@ -209,5 +210,5 @@ if __name__ == "__main__":
     print(f"Input directory: {args.input_dir}")
     print(f"Output directory: {args.output_dir}")
 
-    convert_data_to_ours(args)
-    # convert_description_to_dictionary(args)
+    titles = convert_data_to_ours(args)
+    convert_description_to_dictionary(args, titles)
