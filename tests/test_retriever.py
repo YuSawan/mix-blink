@@ -17,7 +17,7 @@ from mix_blink.data import (
     read_dataset,
 )
 from mix_blink.retriever import BM25Retriever, DenseRetriever
-from mix_blink.retriever.stopwords import ENGLISH_STOP_WORDS
+from mix_blink.retriever.bm25 import sudachi_tokenize, whitespace_tokenize
 
 TOKEN = os.environ.get("TOKEN", True)
 
@@ -248,60 +248,57 @@ class TestDenseRetriever:
 
 
 class TestBM25Retriever:
+    @pytest.mark.parametrize("lang", ["en", "ja"])
     @pytest.mark.parametrize("top_k",[-1, 0, 2, 6])
-    def test___init__(self, top_k: int) -> None:
+    def test___init__(self, lang: str, top_k: int) -> None:
         if top_k <= 0:
             with pytest.raises(RuntimeError) as re:
                 BM25Retriever(
-                    mention_tokenizer=mention_tokenizer,
-                    entity_tokenizer=entity_tokenizer,
                     dictionary=dictionary,
-                    top_k=top_k
+                    top_k=top_k,
+                    lang=lang
                 )
             assert isinstance(re.value, RuntimeError)
             assert str(re.value) == "K is zero or under zero."
         elif top_k == 6:
             with pytest.raises(RuntimeError) as re:
                 BM25Retriever(
-                    mention_tokenizer=mention_tokenizer,
-                    entity_tokenizer=entity_tokenizer,
                     dictionary=dictionary,
-                    top_k=top_k
+                    top_k=top_k,
+                    lang=lang
                 )
             assert isinstance(re.value, RuntimeError)
             assert str(re.value) == "K is same or over the size of dictionary"
         else:
             retriever = BM25Retriever(
-                    mention_tokenizer=mention_tokenizer,
-                    entity_tokenizer=entity_tokenizer,
                     dictionary=dictionary,
-                    top_k=top_k
+                    top_k=top_k,
+                    lang=lang
             )
-            assert isinstance(retriever.index, bm25s.BM25)
-            assert len(list(retriever.meta_ids_to_keys.keys())) == 5
+            if lang == 'en':
+                assert retriever.tokenize_func is whitespace_tokenize
+            if lang == 'ja':
+                assert retriever.tokenize_func is sudachi_tokenize
+            assert retriever.top_k == top_k
 
-    @pytest.mark.parametrize("text", ["amazon is established by"])
-    def test_tokenize(self, text: str) -> None:
+    @pytest.mark.parametrize("top_k",[2, 3])
+    def test_build_index(self, top_k: int) -> None:
         retriever = BM25Retriever(
-            mention_tokenizer=mention_tokenizer,
-            entity_tokenizer=entity_tokenizer,
-            dictionary=dictionary,
-            top_k=2
+                dictionary=dictionary,
+                top_k=top_k
         )
-        tokenized_doc = bm25s.tokenize([text], stopwords=ENGLISH_STOP_WORDS, stemmer=retriever.bm25_tokenize)
-        assert isinstance(tokenized_doc, bm25s.tokenization.Tokenized)
-        assert len(tokenized_doc.ids) == 1 and len(tokenized_doc.ids[0]) == 2
-        assert len(tokenized_doc.vocab.keys()) == 2
+        retriever.build_index()
+        assert isinstance(retriever.index, bm25s.BM25)
+        assert len(list(retriever.meta_ids_to_keys.keys())) == 5
 
     @pytest.mark.parametrize("query", ["amazon is established by"])
     @pytest.mark.parametrize("top_k", [None, 0, 1, 2, 5, 10])
     def test_search_knn(self, query: str, top_k: int) -> None:
         retriever = BM25Retriever(
-            mention_tokenizer=mention_tokenizer,
-            entity_tokenizer=entity_tokenizer,
             dictionary=dictionary,
             top_k=2
         )
+        retriever.build_index()
         if top_k is None:
             scores, indices = retriever.search_knn(query)
             assert isinstance(scores, np.ndarray) and isinstance(indices, np.ndarray)
@@ -328,13 +325,14 @@ class TestBM25Retriever:
 
 
     @pytest.mark.parametrize("top_k", [1, 2, 4])
-    def test_get_hard_negatives(self, top_k: int) -> None:
+    @pytest.mark.parametrize("lang", ["en", "ja"])
+    def test_get_hard_negatives(self, top_k: int, lang: str) -> None:
         retriever = BM25Retriever(
-            mention_tokenizer=mention_tokenizer,
-            entity_tokenizer=entity_tokenizer,
             dictionary=dictionary,
-            top_k=top_k
+            top_k=top_k,
+            lang=lang
         )
+        retriever.build_index()
         candidate_ids = retriever.get_hard_negatives(dataset)
         assert isinstance(candidate_ids, list)
         assert len(dataset) == len(candidate_ids)
