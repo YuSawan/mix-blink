@@ -105,8 +105,8 @@ class BM25Retriever:
         return scores, results
 
     def get_hard_negatives(self, dataset: Dataset, n_threads: int = -1) -> list[list[str]]:
-        # queries = [text[span[0]: span[1]] for text, span in zip(dataset['text'], dataset['entity_span'])]
-        queries = dataset['text']
+        queries = [text[span[0]: span[1]] for text, span in zip(dataset['text'], dataset['entity_span'])]
+        # queries = dataset['text']
         print(queries[0])
         print(len(queries))
         _, results = self.search_knn(queries, top_k=self.top_k+1, n_threads=n_threads)
