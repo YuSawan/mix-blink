@@ -80,26 +80,27 @@ def _conll_words_to_text(words: Iterable[str]) -> tuple[str, list[tuple[int, int
 
 def _conll_tags_to_spans(tags: Iterable[str], links: Iterable[str]) -> Iterable[tuple[int, int, str, str]]:
     # NOTE: assume BIO scheme
-    start, label = -1, None
-    for i, (tag, link) in enumerate(zip(list(tags) + ["O"], list(links) + ["O"])):
+    start, label, link = -1, None, None
+    for i, (tag, link_tag) in enumerate(zip(list(tags) + ["O"], list(links) + ["O"])):
         if tag == "O":
             if start >= 0:
                 assert label is not None
                 yield (start, i, label, link)
-                start, label = -1, None
+                start, label, link = -1, None, None
         else:
             cur_label = tag[2:]
+            cur_link = link_tag[2:]
             if tag.startswith("B"):
                 if start >= 0:
                     assert label is not None
                     yield (start, i, label, link)
-                start, label = i, cur_label
+                start, label, link = i, cur_label, cur_link
             else:
                 if cur_label != label:
                     if start >= 0:
                         assert label is not None
                         yield (start, i, label, link)
-                    start, label = i, cur_label
+                    start, label, link = i, cur_label, cur_link
 
 
 def _convert_conll_to_ours(input_file: str) -> tuple[list[dict], list[tuple[str, str]]]:
