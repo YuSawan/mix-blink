@@ -41,7 +41,7 @@ class ModelArguments:
     freeze_entity_encoder: bool
     measure: str
     temperature: float
-    negative: str
+    negative: bool
     top_k: int
     cache_dir: Optional[str]
     prev_path: Optional[str]
@@ -58,7 +58,7 @@ def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
         "--measure", type=str, default=None
     )
     parser.add_argument(
-        "--negative", type=str, default=None
+        "--negative", type=bool, default=None
     )
     parser.add_argument(
         '--prev_path', metavar="DIR", default=None
