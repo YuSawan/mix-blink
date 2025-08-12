@@ -30,7 +30,6 @@ dictionary = EntityDictionary(
     tokenizer=entity_tokenizer,
     dictionary_path=dictionary_path,
     training_arguments=training_args,
-    nil={"name": "[NIL]", "description": "nil description"}
 )
 
 raw_datasets = read_dataset(test_file=test_dataset_path)
