@@ -67,7 +67,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
     raw_datasets = read_dataset(
         data_args.train_file,
         data_args.validation_file,
-        cache_dir
+        cache_dir=cache_dir
     )
     preprocessor = Preprocessor(
         mention_tokenizer,
