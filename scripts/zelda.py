@@ -84,7 +84,7 @@ def _conll_tags_to_spans(tags: Iterable[str], links: Iterable[str]) -> Iterable[
     for i, (tag, link_tag) in enumerate(zip(list(tags) + ["O"], list(links) + ["O"])):
         if tag == "O":
             if start >= 0:
-                assert label is not None
+                assert label is not None and link is not None
                 yield (start, i, label, link)
                 start, label, link = -1, None, None
         else:
@@ -92,13 +92,13 @@ def _conll_tags_to_spans(tags: Iterable[str], links: Iterable[str]) -> Iterable[
             cur_link = link_tag[2:]
             if tag.startswith("B"):
                 if start >= 0:
-                    assert label is not None
+                    assert label is not None and link is not None
                     yield (start, i, label, link)
                 start, label, link = i, cur_label, cur_link
             else:
                 if cur_label != label:
                     if start >= 0:
-                        assert label is not None
+                        assert label is not None and link is not None
                         yield (start, i, label, link)
                     start, label, link = i, cur_label, cur_link
 
@@ -145,7 +145,7 @@ def convert_data_to_ours(args: Namespace) -> list[tuple[str, str]]:
     all_titles = []
 
     input_file = os.path.join(input_dir, "train_data/zelda_train.conll")
-    output_path = os.path.join(output_dir, "zelda_train.jsonl")
+    output_path = os.path.join(output_dir, "train_zelda.jsonl")
     print(f"Processing {input_file} to {output_path}")
     dataset, titles = _convert_conll_to_ours(input_file)
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -174,7 +174,7 @@ def convert_description_to_dictionary(args: Namespace, titles: list[tuple[str, s
         args (Namespace): Command line arguments containing input and output file paths.
     """
     description_file = os.path.join(args.input_dir, "other/entity_descriptions.jsonl")
-    output_path = os.path.join(args.output_dir, "zelda_dictionary.jsonl")
+    output_path = os.path.join(args.output_dir, "dictionary.jsonl")
 
     descriptions = {}
     for line in open(description_file, 'r', encoding='utf-8'):
