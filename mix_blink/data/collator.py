@@ -14,7 +14,7 @@ from .dictionary import EntityDictionary
 
 @dataclass
 class Collator(DataCollatorWithPadding):
-    def __call__(self, features: list[dict[str, Any]]) -> dict[str, Any]|tuple[dict[str, Any], list[list[int]]]:
+    def __call__(self, features: list[dict[str, Any]]) -> Any:
         features = [f.copy() for f in features]
         if "labels" in list(features[0].keys()):
             labels = []
@@ -23,6 +23,7 @@ class Collator(DataCollatorWithPadding):
                 _ = f.pop('entity_span')
                 _ = f.pop("id")
                 _ = f.pop("candidates", None)
+                _ = f.pop("hard_negatives", None)
                 labels.append(f.pop("labels"))
             batch = pad_without_fast_tokenizer_warning(
                 self.tokenizer,
@@ -65,9 +66,9 @@ class CollatorForEntityLinking:
             _ = f.pop("id")
             labels = f.pop("labels")
             inbatch_encodings.append(self.dictionary[labels[0]].encoding)
-            candidates = f.pop("candidates")
-            if candidates != []:
-                negative_encodings.extend([self.dictionary[n].encoding for n in candidates])
+            hard_negatives = f.pop("hard_negatives")
+            if hard_negatives != []:
+                negative_encodings.extend([self.dictionary[n].encoding for n in hard_negatives])
 
         batch = pad_without_fast_tokenizer_warning(
             self.tokenizer,

@@ -4,7 +4,7 @@ from typing import Any, Optional, TypedDict
 from datasets import Dataset, DatasetDict, load_dataset
 from datasets.fingerprint import get_temporary_cache_files_directory
 from transformers import (
-    PreTrainedTokenizerBase,
+    PreTrainedTokenizer,
     TrainingArguments,
 )
 from transformers.tokenization_utils_base import BatchEncoding
@@ -56,7 +56,7 @@ class Preprocessor:
     """
     def __init__(
             self,
-            tokenizer: PreTrainedTokenizerBase,
+            tokenizer: PreTrainedTokenizer,
             labels: list[str],
             negative: bool = False,
             start_mention_token: str = '[START_ENT]',
@@ -92,7 +92,7 @@ class Preprocessor:
                 encodings["entity_span"] = (ent["start"], ent["end"])
                 encodings["id"] = example['id']
                 encodings["labels"] = []
-                encodings["candidates"] = []
+                encodings["hard_negatives"] = []
                 for label in ent["label"]:
                     if label in self.label2id:
                         encodings["labels"].append(self.label2id[label])
@@ -102,9 +102,10 @@ class Preprocessor:
                         else:
                             raise KeyError(f"Label {label} not found in label2id mapping.")
                 if self.negative:
-                    for candidate in ent['candidates']:
+                    assert "hard_negatives" in ent
+                    for candidate in ent['hard_negatives']:
                         if candidate in self.label2id:
-                            encodings["candidates"].append(self.label2id[candidate])
+                            encodings["hard_negatives"].append(self.label2id[candidate])
                         else:
                             if self.remove_nil:
                                 continue

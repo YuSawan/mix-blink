@@ -52,7 +52,7 @@ class TestPreprocessor:
         raw_dataset = read_dataset(test_file=dataset_path)
         for document in raw_dataset['test']["examples"]:
             for example in document:
-                for ent in example['entities']:
+                for _ in example['entities']:
                     encodings = tokenizer(example["text"], truncation=True)
                     assert isinstance(encodings, BatchEncoding)
 
@@ -75,5 +75,5 @@ class TestPreprocessor:
         assert "labels" in outputs.keys()
         assert "id" in outputs.keys()
         assert "entity_span" in outputs.keys()
-        assert "candidates" in outputs.keys()
         assert "text" in outputs.keys()
+        assert "hard_negatives" in outputs.keys()
