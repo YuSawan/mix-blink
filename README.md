@@ -47,7 +47,7 @@ pip install .
 #### Inbatch Training
 ```
 python mix_blink/cli/train.py \
-    --config_file configs/config_inbatch.yaml \
+    --config_file configs/config.yaml \
     --output_dir ./initial_output/ \
     --negative False
 ```
@@ -55,7 +55,7 @@ python mix_blink/cli/train.py \
 #### Inbatch+Hard Negatives Training
 ```
 python mix_blink/cli/train.py \
-    --config_file configs/config_hard.yaml \
+    --config_file configs/config.yaml \
     --output_dir ./second_output/ \
     --prev_path ./initial_output/ \
     --negative True \
@@ -64,7 +64,7 @@ python mix_blink/cli/train.py \
 ### Build Index
 ```
 python mix_blink/cli/build_index.py \
-    --config_file configs/config_hard.yaml \
+    --config_file configs/config.yaml \
     --output_dir ./retriever/ \
     --prev_path ./initial_output/
 ```

@@ -11,7 +11,7 @@ model:
   temperature: 1.0 # temperature: temperature for ranging similarity
   negative: False # negative: {False: in-batch sampling, True: inbatch+hard negatives}
   top_k: 10 # top_k: Number of hard negative samples
-  prev_path: null # Pretrained Model Path: Use None if no pretrained model is being used
+  model_path: null # Pretrained Model Path: Use None if no pretrained model is being used
   cache_dir: null
 
 # Dataset Configuration

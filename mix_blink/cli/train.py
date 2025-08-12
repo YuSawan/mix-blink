@@ -33,10 +33,10 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
     logger.info(f"training args: {training_args}")
 
     set_seed(training_args.seed)
-    if model_args.prev_path:
-        mention_tokenizer = AutoTokenizer.from_pretrained(Path(model_args.prev_path, 'mention_tokenizer'))
-        entity_tokenizer = AutoTokenizer.from_pretrained(Path(model_args.prev_path, 'entity_tokenizer'))
-        model = MixBlink.from_pretrained(model_args.prev_path)
+    if model_args.model_path:
+        mention_tokenizer = AutoTokenizer.from_pretrained(Path(model_args.model_path, 'mention_tokenizer'))
+        entity_tokenizer = AutoTokenizer.from_pretrained(Path(model_args.model_path, 'entity_tokenizer'))
+        model = MixBlink.from_pretrained(model_args.model_path)
         config = model.config
     else:
         mention_tokenizer = AutoTokenizer.from_pretrained(model_args.mention_encoder, model_max_length=model_args.mention_context_length, token=True)

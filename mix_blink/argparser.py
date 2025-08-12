@@ -44,7 +44,7 @@ class ModelArguments:
     negative: bool
     top_k: int
     cache_dir: Optional[str]
-    prev_path: Optional[str]
+    model_path: Optional[str]
 
 
 def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
@@ -61,7 +61,7 @@ def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
         "--negative", type=bool, default=None
     )
     parser.add_argument(
-        '--prev_path', metavar="DIR", default=None
+        '--model_path', metavar="DIR", default=None
     )
 
     args, extras = parser.parse_known_args()
@@ -77,6 +77,6 @@ def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
 
     model_args.measure = args.measure if args.measure else model_args.measure
     model_args.negative = args.negative if args.negative else model_args.negative
-    model_args.prev_path = args.prev_path if args.prev_path else model_args.prev_path
+    model_args.model_path = args.model_path if args.model_path else model_args.model_path
 
     return arguments, model_args, training_args
