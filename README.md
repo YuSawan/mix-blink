@@ -44,29 +44,46 @@ pip install .
 
 ### Finetuning
 
-#### 1st stage
+#### Inbatch Training
 ```
-python mix_blink/cli/run.py \
-    --do_train \
-    --config_file configs/config.yaml \
-    --output_dir ./initial_output/
+python mix_blink/cli/train.py \
+    --config_file configs/config_inbatch.yaml \
+    --output_dir ./initial_output/ \
+    --negative False
 ```
 
-#### 2nd stage
+#### Inbatch+Hard Negatives Training
 ```
-python mix_blink/cli/run.py \
-    --do_train \
-    --config_file configs/config.yaml \
-    --negative dense \
+python mix_blink/cli/train.py \
+    --config_file configs/config_hard.yaml \
+    --output_dir ./second_output/ \
     --prev_path ./initial_output/ \
-    --output_dir ./second_output/
+    --negative True \
+```
+
+### Build Index
+```
+python mix_blink/cli/build_index.py \
+    --config_file configs/config_hard.yaml \
+    --output_dir ./retriever/ \
+    --prev_path ./initial_output/
+```
+
+### Retrieve Hard Negatives/Candidates
+```
+python mix_blink/cli/get_candidates.py \
+    --input_file ./datasets/dataset.jsonl \
+    --dictionary_path ./datasets/dictionary.jsonl \
+    --output_dir ./dataset_candidates/ \
+    --model_path ./initial_output/ \
+    --retriever_dir ./retriever/ \
 ```
 
 ### Evaluation/Prediction
 ```
-python mix_blink/cli/run.py \
-    --do_eval \
-    --do_predict \
+python mix_blink/cli/eval.py \
+    --input_file ./datasets/dataset.jsonl \
+    --dictionary_path ./datasets/dictionary.jsonl \
     --config_file configs/config.yaml \
     --prev_path PATH_TO_YOUR_MODEL \
     --output_dir PATH_TO_YOUR_MODEL
