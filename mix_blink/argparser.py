@@ -42,7 +42,6 @@ class ModelArguments:
     measure: str
     temperature: float
     negative: bool
-    top_k: int
     cache_dir: Optional[str]
     model_path: Optional[str]
 
@@ -55,10 +54,10 @@ def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
         "--config_file", metavar="FILE", required=True
     )
     parser.add_argument(
-        "--measure", type=str, default=None
+        "--measure", type=str, default=None, choices=["cos", "ip", "l2"]
     )
     parser.add_argument(
-        "--negative", type=bool, default=None
+        "--hard_negative", action='store_true', default=None
     )
     parser.add_argument(
         '--model_path', metavar="DIR", default=None
@@ -76,7 +75,7 @@ def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
     training_args = replace(training_args, **config)
 
     model_args.measure = args.measure if args.measure else model_args.measure
-    model_args.negative = args.negative if args.negative else model_args.negative
+    model_args.negative = args.hard_negative if args.hard_negative else model_args.negative
     model_args.model_path = args.model_path if args.model_path else model_args.model_path
 
     return arguments, model_args, training_args
