@@ -17,7 +17,7 @@ model:
 dataset:
   train_file: './zelda/train_zelda.jsonl'
   test_file: './zelda/test_aida-b.jsonl'
-  dictionary_file: './zelda/zelda_dictionary.jsonl'
+  dictionary_file: './zelda/dictionary.jsonl'
   add_nil: true
   nil_label: '[NIL]'
   nil_description: '[NIL] is an entity that does not exist in the dataset.'
