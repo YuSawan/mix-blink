@@ -85,7 +85,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
         temperature=model_args.temperature,
         args=training_args,
         train_dataset = splits['train'],
-        eval_dataset = splits['validation'],
+        eval_dataset = splits['validation'] if 'validation' in splits else None,
         data_collator = CollatorForEntityLinking(mention_tokenizer, dictionary)
     )
     trainer.add_callback(LoggerCallback(logger))
