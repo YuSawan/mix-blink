@@ -5,8 +5,8 @@ model:
   hidden_size: 1024 # 768 if you use base
   freeze_mention_encoder: false
   freeze_entity_encoder: false
-  mention_context_length: 512
-  entity_context_length: 512
+  mention_context_length: 128
+  entity_context_length: 128
   measure: 'ip' # measure: {'cos': cosine, 'ip': inner-product, 'l2': eucridean}
   temperature: 1.0 # temperature: temperature for ranging similarity
   negative: false # negative: {False: in-batch sampling, True: inbatch+hard negatives}
@@ -16,6 +16,7 @@ model:
 # Dataset Configuration
 dataset:
   train_file: './zelda/train_zelda.jsonl'
+  validation_file: null
   test_file: './zelda/test_aida-b.jsonl'
   dictionary_file: './zelda/dictionary.jsonl'
   add_nil: true
@@ -29,8 +30,8 @@ dataset:
 remove_unused_columns: false
 
 # Training Parameters
-num_train_epochs: 5
-per_device_train_batch_size: 8
+num_train_epochs: 4
+per_device_train_batch_size: 16
 per_device_eval_batch_size: 32
 lr_scheduler_type: "linear"
 warmup_ratio: 0.06
