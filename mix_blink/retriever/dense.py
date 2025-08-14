@@ -110,7 +110,7 @@ class DenseRetriever:
             pbar.update()
             batch = batch.to(self.device)
             outputs = model.mention_encoder(**batch).to('cpu').detach().numpy().copy()
-            _, batch_indices = self.search_knn(outputs, top_k=top_k+1)
+            _, batch_indices = self.search_knn(outputs, top_k=top_k+max([len(label) for label in labels]))
             for idxs, indices in zip(labels, batch_indices):
                 candidate_ids.append(indices[:top_k])
                 for idx in idxs:
