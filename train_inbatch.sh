@@ -15,6 +15,8 @@ mkdir -p ${base_output_dir}
 
 uv run torchrun mix_blink/cli/train.py \
     --config_file ${config_file} \
+    --dictionary_file zelda/dictionary.jsonl \
+    --train_file zelda/train_zelda.jsonl \
     --measure ${measure} \
     --output_dir ${base_output_dir}/inbatch \
     --run_name ${base_output_dir}/inbatch \
