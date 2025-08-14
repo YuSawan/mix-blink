@@ -1,15 +1,22 @@
 import logging
+from argparse import ArgumentParser
+from dataclasses import replace
 from pathlib import Path
 
 from datasets.fingerprint import get_temporary_cache_files_directory
 from transformers import (
     AutoTokenizer,
+    HfArgumentParser,
     TrainingArguments,
     set_seed,
 )
 
-from mix_blink import MixBlink, MixBlinkConfig, parse_args
-from mix_blink.argparser import DatasetArguments, ModelArguments
+from mix_blink import MixBlink, MixBlinkConfig
+from mix_blink.argparser import (
+    DatasetArguments,
+    ModelArguments,
+    load_config_as_namespace,
+)
 from mix_blink.data import (
     CollatorForEntityLinking,
     EntityDictionary,
@@ -31,6 +38,8 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
     logger.info(f"data_args: {data_args}")
     logger.info(f"model_args: {model_args}")
     logger.info(f"training args: {training_args}")
+    if data_args.dictionary_file is None:
+        raise ValueError("Dictionary file is required.")
 
     set_seed(training_args.seed)
     if model_args.model_path:
@@ -54,7 +63,7 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
         )
         model = MixBlink(config)
 
-    cache_dir = model_args.cache_dir or get_temporary_cache_files_directory()
+    cache_dir = data_args.cache_dir or get_temporary_cache_files_directory()
     dictionary = EntityDictionary(
         tokenizer=entity_tokenizer,
         dictionary_path=data_args.dictionary_file,
@@ -106,11 +115,53 @@ def main(data_args: DatasetArguments, model_args: ModelArguments, training_args:
 
 
 def cli_main() -> None:
-    data_args, model_args, training_args = parse_args()
+    parser = ArgumentParser()
+    hfparser = HfArgumentParser(TrainingArguments)
+    parser.add_argument(
+        '--model_path', "-m", metavar="DIR", type=str, default=None,
+    )
+    parser.add_argument(
+        "--config_file", "-c", metavar="FILE", required=True,
+    )
+    parser.add_argument(
+        "--dictionary_file", "-d", type=str, required=True,
+    )
+    parser.add_argument(
+        "--train_file", type=str, required=True,
+    )
+    parser.add_argument(
+        "--validation_file", type=str, default=None,
+    )
+    parser.add_argument(
+        "--measure", type=str, default="ip", choices=["ip", "cos", "l2"]
+    )
+    parser.add_argument(
+        "--hard_negative", action='store_true', default=False
+    )
+
+    args, extras = parser.parse_known_args()
+    config = vars(load_config_as_namespace(args.config_file))
+    training_args = hfparser.parse_args_into_dataclasses(extras)[0]
+
+    data_config = config.pop("dataset")
+    model_config = config.pop("model")
+
+    data_args = DatasetArguments(**data_config)
+    model_args = ModelArguments(**model_config)
+    training_args = replace(training_args, **config)
+
+    data_args.dictionary_file = args.dictionary_file
+    data_args.train_file = args.train_file
+    data_args.validation_file = args.validation_file
+
+    if args.model_path:
+        model_args.model_path = args.model_path
+    model_args.measure = args.measure
+    model_args.negative = args.hard_negative
+
     if data_args.validation_file is None:
         training_args.eval_strategy = "no"
     main(data_args, model_args, training_args)
-
 
 if __name__ == '__main__':
     cli_main()
