@@ -1,3 +1,4 @@
+
 import torch
 import wandb
 from datasets import Dataset
@@ -8,13 +9,12 @@ from ..retriever import DenseRetriever
 
 
 @torch.no_grad()
-def evaluate(model: MixBlink, dataset: Dataset, retriever: DenseRetriever) -> dict[str, int]:
-    retriever.build_index(model.entity_encoder)
+def evaluate(model: MixBlink, dataset: Dataset, retriever: DenseRetriever) -> dict[str, int|float]:
     dataloader = retriever.get_dataloader(dataset, retriever.mention_tokenizer)
     dictionary = retriever.dictionary
     model.to(retriever.device)
 
-    true, tp_1, tp_5, tp_10, tp_20, tp_50, tp_100 = 0, 0, 0, 0, 0, 0, 0
+    true, tp_1, tp_10, tp_50, tp_100, reciprocal_rank = 0, 0, 0, 0, 0, 0.
     pbar = tqdm(total=len(dataloader), desc="Eval")
     for batch, labels in dataloader:
         pbar.update()
@@ -23,37 +23,37 @@ def evaluate(model: MixBlink, dataset: Dataset, retriever: DenseRetriever) -> di
         _, batch_indices = retriever.search_knn(query, top_k=100)
         for idxs, indices in zip(labels, batch_indices):
             true += 1
-            label = [dictionary[idx].id for idx in idxs]
-            for i, ind in enumerate(indices):
-                if ind in label:
+            best_rank = 0
+            for idx in idxs:
+                dic_id = dictionary[idx].id
+                if dic_id in indices:
+                    rank = indices.index(dic_id) + 1
+                    if rank < best_rank or best_rank == 0:
+                        best_rank = rank
+            if best_rank > 0:
+                if best_rank == 1:
+                    tp_1 += 1
+                if best_rank <= 10:
+                    tp_10 += 1
+                if best_rank <= 50:
+                    tp_50 += 1
+                if best_rank <= 100:
                     tp_100 += 1
-                    if i == 0:
-                        tp_1 += 1
-                    if i < 5:
-                        tp_5 += 1
-                    if i < 10:
-                        tp_10 += 1
-                    if i < 20:
-                        tp_20 += 1
-                    if i < 50:
-                        tp_50 += 1
-                    break
+                reciprocal_rank += 1 / best_rank
     pbar.close()
 
     return {
         "tp_1": tp_1,
-        "tp_5": tp_5,
         "tp_10": tp_10,
-        "tp_20": tp_20,
         "tp_50": tp_50,
         "tp_100": tp_100,
-        "true": true
+        "true": true,
+        "reciprocal_rank": reciprocal_rank
     }
 
-def submit_wandb_eval(metrics: dict[str, int]) -> None:
+def submit_wandb_eval(metrics: dict[str, int | float]) -> None:
     wandb.log({"R@1": metrics["tp_1"]/metrics["true"]})
-    wandb.log({"R@5": metrics["tp_1"]/metrics["true"]})
     wandb.log({"R@10": metrics["tp_10"]/metrics["true"]})
-    wandb.log({"R@20": metrics["tp_20"]/metrics["true"]})
     wandb.log({"R@50": metrics["tp_50"]/metrics["true"]})
     wandb.log({"R@100": metrics["tp_100"]/metrics["true"]})
+    wandb.log({"MRR": metrics["reciprocal_rank"]/metrics["true"]})
