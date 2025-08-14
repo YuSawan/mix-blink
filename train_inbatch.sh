@@ -5,7 +5,7 @@
 
 export WANDB_PROJECT=MixBLINK_EL
 
-config_file=configs/config_inbatch.yaml
+config_file=configs/config.yaml
 output_dir=save_models/bert-base-uncased
 seed=0
 measure='ip'
@@ -13,10 +13,9 @@ measure='ip'
 base_output_dir=${output_dir}/${seed}/${measure}
 mkdir -p ${base_output_dir}
 
-uv run python mix_blink/cli/run.py \
-    --negative False \
+uv run torchrun mix_blink/cli/train.py \
     --config_file ${config_file} \
     --measure ${measure} \
-    --seed ${seed} \
     --output_dir ${base_output_dir}/inbatch \
-    --run_name ${base_output_dir}/inbatch
+    --run_name ${base_output_dir}/inbatch \
+    --seed ${seed}
