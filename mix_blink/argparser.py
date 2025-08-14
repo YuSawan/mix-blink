@@ -1,10 +1,9 @@
 import os
-from argparse import ArgumentParser, Namespace
-from dataclasses import dataclass, replace
+from argparse import Namespace
+from dataclasses import dataclass
 from typing import Optional
 
 import yaml
-from transformers import HfArgumentParser, TrainingArguments
 
 
 def load_config_as_namespace(config_file: str | os.PathLike) -> Namespace:
@@ -16,7 +15,7 @@ def load_config_as_namespace(config_file: str | os.PathLike) -> Namespace:
 @dataclass
 class DatasetArguments:
     """Dataset arguments."""
-    dictionary_file: str
+    dictionary_file: Optional[str] = None
     train_file : Optional[str] = None
     validation_file : Optional[str] = None
     test_file: Optional[str] = None
@@ -27,6 +26,7 @@ class DatasetArguments:
     end_mention_token: str = "[END_ENT]"
     entity_token: str = "[ENT]"
     language: str = "en"
+    cache_dir: Optional[str] = None
 
 
 @dataclass
@@ -34,48 +34,14 @@ class ModelArguments:
     """Model arguments."""
     mention_encoder: str
     entity_encoder: str
-    mention_context_length: int
-    entity_context_length: int
     hidden_size: int
-    freeze_mention_encoder: bool
-    freeze_entity_encoder: bool
-    measure: str
-    temperature: float
-    negative: bool
-    cache_dir: Optional[str]
-    model_path: Optional[str]
-
-
-def parse_args() -> tuple[DatasetArguments, ModelArguments, TrainingArguments]:
-    parser = ArgumentParser()
-    hfparser = HfArgumentParser(TrainingArguments)
-
-    parser.add_argument(
-        "--config_file", metavar="FILE", required=True
-    )
-    parser.add_argument(
-        "--measure", type=str, default=None, choices=["cos", "ip", "l2"]
-    )
-    parser.add_argument(
-        "--hard_negative", action='store_true', default=None
-    )
-    parser.add_argument(
-        '--model_path', metavar="DIR", default=None
-    )
-
-    args, extras = parser.parse_known_args()
-    config = vars(load_config_as_namespace(args.config_file))
-    training_args = hfparser.parse_args_into_dataclasses(extras)[0]
-
-    data_config = config.pop("dataset")
-    model_config = config.pop("model")
-
-    arguments = DatasetArguments(**data_config)
-    model_args = ModelArguments(**model_config)
-    training_args = replace(training_args, **config)
-
-    model_args.measure = args.measure if args.measure else model_args.measure
-    model_args.negative = args.hard_negative if args.hard_negative else model_args.negative
-    model_args.model_path = args.model_path if args.model_path else model_args.model_path
-
-    return arguments, model_args, training_args
+    mention_context_length: int = 512
+    entity_context_length: int = 512
+    freeze_mention_encoder: bool = False
+    freeze_entity_encoder: bool = False
+    measure: str = 'ip'
+    temperature: float = 1.0
+    negative: bool = False
+    model_path: Optional[str] = None
+    top_k: int = 10
+    retriever_path: Optional[str] = None
