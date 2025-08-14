@@ -7,24 +7,17 @@ model:
   freeze_entity_encoder: false
   mention_context_length: 128
   entity_context_length: 128
-  measure: 'ip' # measure: {'cos': cosine, 'ip': inner-product, 'l2': eucridean}
-  temperature: 1.0 # temperature: temperature for ranging similarity
-  negative: false # negative: {False: in-batch sampling, True: inbatch+hard negatives}
-  model_path: null # Pretrained Model Path: Use None if no pretrained model is being used
-  cache_dir: null
+  temperature: 1.0
 
 # Dataset Configuration
 dataset:
-  train_file: './zelda/train_zelda.jsonl'
-  validation_file: null
-  test_file: './zelda/test_aida-b.jsonl'
-  dictionary_file: './zelda/dictionary.jsonl'
   add_nil: true
   nil_label: '[NIL]'
   nil_description: '[NIL] is an entity that does not exist in the dataset.'
   start_mention_token: '<mention>'
   end_mention_token: '</mention>'
   entity_token: '<entity>'
+  cache_dir: null
 
 # Dataloader
 remove_unused_columns: false
