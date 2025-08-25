@@ -18,15 +18,14 @@ from mix_blink.data import (
     get_splits,
     read_dataset,
 )
-from mix_blink.retriever import DenseRetriever
 
 dictionary_path = str(files(test_data).joinpath("dictionary_toy.jsonl"))
 dataset_path = str(files(test_data).joinpath("dataset_toy.jsonl"))
 training_args = TrainingArguments(output_dir=".tmp/")
 
 @pytest.mark.parametrize("model_name", ["google-bert/bert-base-uncased"])
-@pytest.mark.parametrize("sampling", ["inbatch", "dense"])
-def test_CollatorForEntityLinking(model_name: str, sampling: str) -> None:
+@pytest.mark.parametrize("negative", [True, False])
+def test_CollatorForEntityLinking(model_name: str, negative: bool) -> None:
     entity_tokenizer = AutoTokenizer.from_pretrained(model_name)
     entity_tokenizer.add_tokens('[NIL]')
     mention_tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -43,25 +42,10 @@ def test_CollatorForEntityLinking(model_name: str, sampling: str) -> None:
     preprocessor = Preprocessor(
         mention_tokenizer,
         dictionary.entity_ids,
+        negative=negative
     )
     splits = get_splits(raw_datasets, preprocessor, training_args)
-
-    if sampling == 'dense':
-        retriever = DenseRetriever(
-            entity_tokenizer,
-            mention_tokenizer,
-            dictionary,
-            measure="cos",
-            batch_size=1,
-            top_k=3,
-            vector_size=model.config.hidden_size,
-            device=torch.device('cpu'),
-            training_args=training_args
-        )
-        train_candidate_ids = retriever.get_hard_negatives(model, splits['train'])
-        splits['train'] = splits['train'].add_column("negatives", train_candidate_ids)
-
-    collator = CollatorForEntityLinking(mention_tokenizer, dictionary, negative_sample=sampling)
+    collator = CollatorForEntityLinking(mention_tokenizer, dictionary)
     dataloader_params = {
         "batch_size": 2,
         "collate_fn": collator,
@@ -88,7 +72,7 @@ def test_CollatorForEntityLinking(model_name: str, sampling: str) -> None:
 
         hard_negatives_input_ids = batch.get("hard_negatives_input_ids", None)
         hard_negatives_attention_mask = batch.get("hard_negatives_attention_mask", None)
-        if sampling != "inbatch":
+        if negative:
             assert hard_negatives_input_ids is not None
             assert hard_negatives_attention_mask is not None
             assert isinstance(hard_negatives_input_ids, torch.Tensor)

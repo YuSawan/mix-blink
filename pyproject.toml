@@ -10,6 +10,8 @@ dependencies = [
     "datasets>=3.5.0",
     "faiss-cpu>=1.11.0",
     "sentencepiece>=0.2.0",
+    "sudachidict-core>=20250515",
+    "sudachipy>=0.6.10",
     "torch>=2.7.0",
     "transformers[torch]>=4.51.3",
     "wandb>=0.19.10",
@@ -24,6 +26,12 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests",]
 filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]
+
+[project.scripts]
+get_candidate = "mix_blink.cli.get_candidates:cli_main"
+build_index = "mix_blink.cli.build_index:cli_main"
+blink_train = "mix_blink.cli.train:cli_main"
+blink_eval = "mix_blink.cli.eval:cli_main"
 
 [build-system]
 requires = ["hatchling"]

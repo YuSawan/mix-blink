@@ -5,34 +5,26 @@ model:
   hidden_size: 1024 # 768 if you use base
   freeze_mention_encoder: false
   freeze_entity_encoder: false
-  mention_context_length: 512
-  entity_context_length: 512
-  measure: 'cos' # measure: {'cos': cosine, 'ip': inner-product, 'l2': eucridean}
-  temperature: 1.0 # temperature: temperature for ranging similarity
-  negative: 'inbatch' # negative: {'inbatch': in-batch sampling, 'dense': inbatch+hard negative with DPR, 'bm25': inbatch+hard negative with BM25}
-  top_k: 10 # top_k: Number of hard negative samples
-  prev_path: null # Pretrained Model Path: Use None if no pretrained model is being used
-  cache_dir: null
+  mention_context_length: 128
+  entity_context_length: 128
+  temperature: 1.0
 
 # Dataset Configuration
 dataset:
-  train_file: 'train.jsonl'
-  validation_file: 'validation.jsonl'
-  test_file: 'test.jsonl'
-  dictionary_file: 'dictionary.jsonl'
   add_nil: true
   nil_label: '[NIL]'
-  nil_description: '[NIL]は、どの企業IDにも当てはまらない企業である。'
+  nil_description: '[NIL] is an entity that does not exist in the dataset.'
   start_mention_token: '<mention>'
   end_mention_token: '</mention>'
   entity_token: '<entity>'
+  cache_dir: null
 
 # Dataloader
 remove_unused_columns: false
 
 # Training Parameters
-num_train_epochs: 5
-per_device_train_batch_size: 8
+num_train_epochs: 4
+per_device_train_batch_size: 16
 per_device_eval_batch_size: 32
 lr_scheduler_type: "linear"
 warmup_ratio: 0.06

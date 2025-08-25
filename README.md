@@ -25,7 +25,8 @@ pip install .
         {
           "start": 19,
           "end": 24,
-          "label": ["000011"]
+          "label": ["000011"],
+          "hard_negatives": ["000012", "000013", "000014"] # Need if training with hard negatives
         }
       ],
     }
@@ -44,30 +45,55 @@ pip install .
 
 ### Finetuning
 
-#### 1st stage
+#### Inbatch Training
 ```
-python mix_blink/cli/run.py \
-    --do_train \
+python mix_blink/cli/train.py \
     --config_file configs/config.yaml \
+    --dictionary_file datasets/dictionary.jsonl \
+    --train_file datasets/train.jsonl \
     --output_dir ./initial_output/
 ```
 
-#### 2nd stage
+#### Inbatch+Hard Negatives Training
 ```
-python mix_blink/cli/run.py \
-    --do_train \
+python mix_blink/cli/train.py \
+    --model_path ./initial_model/ # Optional
     --config_file configs/config.yaml \
-    --negative dense \
-    --prev_path ./initial_output/ \
-    --output_dir ./second_output/
+    --dictionary_file datasets/dictionary.jsonl \
+    --train_file datasets_with_candidates/train.jsonl \
+    --output_dir ./second_output/ \
+    --hard_negative
+```
+
+### Build Index
+```
+mkdir ./retriever/
+python mix_blink/cli/build_index.py \
+    --model_path ./initial_model/ # Optional
+    --config_file configs/config.yaml \
+    --dictionary_file datasets/dictionary.jsonl \
+    --output_dir ./retriever/
+```
+
+### Retrieve Hard Negatives/Candidates
+```
+mkdir ./datasets_with_candidates/
+python mix_blink/cli/get_candidates.py \
+    --model_path ./initial_model \ # Optional
+    --config_file configs/config.yaml \
+    --dictionary_path ./datasets/dictionary.jsonl
+    --input_file ./datasets/train.jsonl \
+    --output_dir datasets_with_candidates \
+    --retriever_path ./retriever/ \
 ```
 
 ### Evaluation/Prediction
 ```
-python mix_blink/cli/run.py \
-    --do_eval \
-    --do_predict \
+python mix_blink/cli/eval.py \
+    --model_path ./initial_model/ \ # Optional
     --config_file configs/config.yaml \
-    --prev_path PATH_TO_YOUR_MODEL \
-    --output_dir PATH_TO_YOUR_MODEL
+    --dictionary_path ./datasets/dictionary.jsonl \
+    --retriever_path ./retriever/
+    --input_file ./datasets/test.jsonl \
+    --output_dir ./initial_model/
 ```

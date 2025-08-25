@@ -36,7 +36,8 @@ class TestPreprocessor:
 
     @pytest.mark.parametrize("model_name", ["google-bert/bert-base-uncased"])
     @pytest.mark.parametrize("remove_nil", [True, False])
-    def test___call__(self, model_name: str, remove_nil: bool) -> None:
+    @pytest.mark.parametrize("negative", [True, False])
+    def test___call__(self, model_name: str, negative: bool, remove_nil: bool) -> None:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         tokenizer.add_tokens(['[START_ENT]', '[END_ENT]'])
 
@@ -44,13 +45,14 @@ class TestPreprocessor:
         preprocessor = Preprocessor(
             tokenizer,
             dictionary.entity_ids,
+            negative=negative,
             remove_nil=remove_nil
         )
 
         raw_dataset = read_dataset(test_file=dataset_path)
         for document in raw_dataset['test']["examples"]:
             for example in document:
-                for ent in example['entities']:
+                for _ in example['entities']:
                     encodings = tokenizer(example["text"], truncation=True)
                     assert isinstance(encodings, BatchEncoding)
 
@@ -60,7 +62,7 @@ class TestPreprocessor:
 
         assert isinstance(features, list)
         if remove_nil:
-            assert len(features) == 5
+            assert len(features) == 6
         else:
             assert len(features) == 8
         assert isinstance(features[0], BatchEncoding)
@@ -73,3 +75,5 @@ class TestPreprocessor:
         assert "labels" in outputs.keys()
         assert "id" in outputs.keys()
         assert "entity_span" in outputs.keys()
+        assert "text" in outputs.keys()
+        assert "hard_negatives" in outputs.keys()

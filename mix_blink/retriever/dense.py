@@ -2,7 +2,6 @@
 import json
 import os
 from logging import INFO, getLogger
-from typing import Optional
 
 import faiss
 import numpy as np
@@ -28,7 +27,6 @@ class DenseRetriever:
             dictionary: EntityDictionary,
             measure: str,
             batch_size: int,
-            top_k: int,
             vector_size: int,
             device: torch.device,
             training_args: TrainingArguments,
@@ -38,15 +36,10 @@ class DenseRetriever:
             self.dictionary = dictionary
             self.measure = measure
             self.batch_size = batch_size
-            self.top_k = top_k
             self.device = device
             self.vector_size = vector_size
             if self.measure not in ["cos", "ip", "l2"]:
                 raise NotImplementedError(f"{measure} is not supported")
-            if self.top_k <= 0:
-                raise RuntimeError("K is zero or under zero.")
-            if self.top_k >= len(self.dictionary):
-                raise RuntimeError("K is same or over the size of dictionary")
             if self.measure == 'l2':
                 self.index = faiss.IndexFlatL2(vector_size)
             else:
@@ -90,16 +83,15 @@ class DenseRetriever:
             self.index.add(entity_embedding)
         pbar.close()
 
-    def search_knn(self, query_vectors: np.ndarray, top_k: Optional[int] = None) -> tuple[np.ndarray, list[list[str]]]:
-        K = self.top_k if not top_k else top_k
-        if K <= 0:
+    def search_knn(self, query_vectors: np.ndarray, top_k: int) -> tuple[np.ndarray, list[list[str]]]:
+        if top_k <= 0:
             raise RuntimeError("K is zero or under zero.")
-        if K > len(self.dictionary):
-            K = len(self.dictionary)
+        if top_k > len(self.dictionary):
+            top_k = len(self.dictionary)
             logger.warning(f"K is over size of dictionary. K is modified to size of dictionary to {len(self.dictionary)}")
         if self.measure == "cos":
             faiss.normalize_L2(query_vectors)
-        distances, indices = self.index.search(query_vectors, K)
+        distances, indices = self.index.search(query_vectors, top_k)
         indices_keys = []
         for indice in indices:
             indices_keys.append([self.meta_ids_to_keys[ind] for ind in indice])
@@ -107,28 +99,27 @@ class DenseRetriever:
         return distances, indices_keys
 
     @torch.no_grad()
-    def get_hard_negatives(self, model: MixBlink, dataset: Dataset, reset_index: bool = True) -> list[list[str]]:
+    def get_hard_negatives(self, model: MixBlink, dataset: Dataset, top_k: int) -> tuple[list[list[str]], list[list[str]]]:
         model.to(self.device)
         model.eval()
-        if reset_index:
-            self.build_index(model.entity_encoder)
 
         dataloader = self.get_dataloader(dataset, self.mention_tokenizer)
         pbar = tqdm(total=(len(dataloader)), desc='Hard Negative Search')
-        candidate_ids = []
+        hard_negative_ids, candidate_ids = [], []
         for batch, labels in dataloader:
             pbar.update()
             batch = batch.to(self.device)
             outputs = model.mention_encoder(**batch).to('cpu').detach().numpy().copy()
-            _, batch_indices = self.search_knn(outputs, top_k=self.top_k+1)
+            _, batch_indices = self.search_knn(outputs, top_k=top_k+max([len(label) for label in labels]))
             for idxs, indices in zip(labels, batch_indices):
-                if self.dictionary[idxs[0]].id in indices:
-                    indices.remove(self.dictionary[idxs[0]].id)
-                    candidate_ids.append(indices)
-                else:
-                    candidate_ids.append(indices[:self.top_k])
+                candidate_ids.append(indices[:top_k])
+                for idx in idxs:
+                    dic_id = self.dictionary[idx].id
+                    if dic_id in indices:
+                        indices.remove(dic_id)
+                hard_negative_ids.append(indices[:top_k])
         pbar.close()
-        return candidate_ids
+        return candidate_ids, hard_negative_ids
 
     def dump(self, model: Encoder, index_path: str, ensure_ascii: bool = False) -> None:
         self.build_index(model)
@@ -152,22 +143,12 @@ class DenseRetriever:
         else:
             index_file = index_path + ".index.dpr"
             meta_file = index_path + ".meta.json"
-
         logger.info("Loading index from %s", index_file)
         self.index = faiss.read_index(index_file)
         self.meta_ids_to_keys = {int(k): v for k, v in json.load(open(meta_file)).items()}
         logger.info(
             "Loaded index of type %s and size %d", type(self.index), self.index.ntotal
         )
-
-    def index_exists(self, path: str) -> bool:
-        if os.path.isdir(path):
-            index_file = os.path.join(path, "index.dpr")
-            meta_file = os.path.join(path, "meta.json")
-        else:
-            index_file = path + ".index.dpr"
-            meta_file = path + ".meta.json"
-        return os.path.isfile(index_file) and os.path.isfile(meta_file)
 
     def __len__(self) -> int:
         return self.index.ntotal

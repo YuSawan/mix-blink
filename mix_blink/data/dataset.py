@@ -4,7 +4,7 @@ from typing import Any, Optional, TypedDict
 from datasets import Dataset, DatasetDict, load_dataset
 from datasets.fingerprint import get_temporary_cache_files_directory
 from transformers import (
-    PreTrainedTokenizerBase,
+    PreTrainedTokenizer,
     TrainingArguments,
 )
 from transformers.tokenization_utils_base import BatchEncoding
@@ -56,8 +56,9 @@ class Preprocessor:
     """
     def __init__(
             self,
-            tokenizer: PreTrainedTokenizerBase,
+            tokenizer: PreTrainedTokenizer,
             labels: list[str],
+            negative: bool = False,
             start_mention_token: str = '[START_ENT]',
             end_mention_token: str = '[END_ENT]',
             remove_nil: bool = False
@@ -67,6 +68,7 @@ class Preprocessor:
         self.labels = labels
         self.label2id = {label: i for i, label in enumerate(labels)}
         self.id2label = {i: label for i, label in enumerate(labels)}
+        self.negative = negative
         self.start_mention_token = start_mention_token
         self.end_mention_token = end_mention_token
         self.remove_nil = remove_nil
@@ -90,6 +92,7 @@ class Preprocessor:
                 encodings["entity_span"] = (ent["start"], ent["end"])
                 encodings["id"] = example['id']
                 encodings["labels"] = []
+                encodings["hard_negatives"] = []
                 for label in ent["label"]:
                     if label in self.label2id:
                         encodings["labels"].append(self.label2id[label])
@@ -98,6 +101,17 @@ class Preprocessor:
                             continue
                         else:
                             raise KeyError(f"Label {label} not found in label2id mapping.")
+                if self.negative:
+                    assert "hard_negatives" in ent
+                    for candidate in ent['hard_negatives']:
+                        if candidate in self.label2id:
+                            encodings["hard_negatives"].append(self.label2id[candidate])
+                        else:
+                            if self.remove_nil:
+                                continue
+                            else:
+                                raise KeyError(f"Label {label} not found in label2id mapping.")
+
                 if encodings["labels"]:
                     yield encodings
 

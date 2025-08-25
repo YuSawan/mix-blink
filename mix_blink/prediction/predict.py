@@ -10,9 +10,7 @@ from ..retriever import DenseRetriever
 
 
 @torch.no_grad()
-def predict(model: MixBlink, dataset: Dataset, retriever: DenseRetriever, reset_index: bool = False) -> list[dict[str, Any]]:
-    if reset_index:
-        retriever.build_index(model.entity_encoder)
+def predict(model: MixBlink, dataset: Dataset, retriever: DenseRetriever) -> list[dict[str, Any]]:
     dataloader = retriever.get_dataloader(dataset, retriever.mention_tokenizer)
     pbar = tqdm(total=len(dataloader), desc='Predict')
     model.to(retriever.device)
@@ -58,7 +56,7 @@ def predict(model: MixBlink, dataset: Dataset, retriever: DenseRetriever, reset_
 
 
 def submit_wandb_predict(predicts: list[dict[str, Any]]) -> None:
-    columns = ["pid", "text", "mention", "gold", "rank1", "rank2","rank3", "rank4", "rank5", "rank1_desc", "rank2_desc", "rank3_desc", "rank4_desc", "rank5_desc"]
+    columns = ["pid", "text", "mention", "gold", "rank1", "rank2", "rank3", "rank4", "rank5"]
     result_table = wandb.Table(columns=columns)
     for p in predicts:
         result_table.add_data(
@@ -68,6 +66,5 @@ def submit_wandb_predict(predicts: list[dict[str, Any]]) -> None:
             f"{p['predict'][2]['name']} ({p['predict'][2]['id']}; {p['predict'][2]['similarity']})",
             f"{p['predict'][3]['name']} ({p['predict'][3]['id']}; {p['predict'][3]['similarity']})",
             f"{p['predict'][4]['name']} ({p['predict'][4]['id']}; {p['predict'][4]['similarity']})",
-            f"{p['predict'][0]['description']}", f"{p['predict'][1]['description']}", f"{p['predict'][2]['description']}", f"{p['predict'][3]['description']}", f"{p['predict'][4]['description']}"
         )
     wandb.log({"predictions": result_table})
